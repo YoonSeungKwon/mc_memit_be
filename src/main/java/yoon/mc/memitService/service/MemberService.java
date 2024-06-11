@@ -34,6 +34,18 @@ public class MemberService {
         return new MemberResponse(members.getNickname(), members.getProfile(), String.valueOf(members.getCreatedAt()));
     }
 
+    @Transactional
+    public MemberResponse existById(String deviceId){
+        boolean isMember = memberRepository.existsByDeviceId(deviceId);
+        if(isMember)return toResponse(memberRepository.findMembersByDeviceId(deviceId).orElseThrow());
+        else return null;
+    }
+
+    @Transactional
+    public boolean existByNickname(String nickname){
+        return memberRepository.existsByNickname(nickname);
+    }
+
     //유저 정보
     @Transactional(readOnly = true)
     public MemberResponse getInfo(long idx){

@@ -10,9 +10,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import yoon.mc.memitService.entity.Likes;
 import yoon.mc.memitService.entity.Members;
 import yoon.mc.memitService.entity.Posts;
 import yoon.mc.memitService.exception.MemitException;
+import yoon.mc.memitService.repository.LikeRepository;
 import yoon.mc.memitService.repository.PostRepository;
 import yoon.mc.memitService.request.PostDto;
 import yoon.mc.memitService.response.PostDetailResponse;
@@ -30,6 +32,8 @@ public class PostService {
     private final PostRepository postRepository;
 
     private final AmazonS3Client amazonS3Client;
+
+    private final LikeRepository likeRepository;
 
     private final String bucket = "memit";
     private final String region = "ap-northeast-2";
@@ -118,6 +122,7 @@ public class PostService {
     }
 
     //글 수정
+    @Transactional
     public PostDetailResponse update(long idx, PostDto dto){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -127,12 +132,37 @@ public class PostService {
         Members currentMember = (Members) authentication.getPrincipal();
         Posts post = postRepository.findPostsByPostIdx(idx).orElseThrow();
 
-        if(post.getMembers() != currentMember)
+        if(!post.getMembers().equals(currentMember))
             throw new MemitException("권한이 없음", HttpStatus.UNAUTHORIZED);
 
         post.setContent(dto.getContent());
 
         return toDetailResponse(postRepository.save(post));
+    }
+
+    @Transactional
+    public long like(long idx){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken)
+            throw new MemitException("로그인 만료", HttpStatus.UNAUTHORIZED);
+
+        Members currentMember = (Members) authentication.getPrincipal();
+        Posts posts = postRepository.findPostsByPostIdx(idx).orElseThrow();
+
+        if(posts == null)
+            throw new MemitException("Post가 없음", HttpStatus.NOT_FOUND);
+
+        if(likeRepository.existsByMembersAndPosts(currentMember, posts)){
+            posts.dislike();
+            likeRepository.delete(likeRepository.findLikesByMembersAndPosts(currentMember, posts));
+        }
+        else{
+            Likes likes = Likes.builder().members(currentMember).posts(posts).build();
+            posts.like();
+            likeRepository.save(likes);
+        }
+        return posts.getLike();
     }
 
 }

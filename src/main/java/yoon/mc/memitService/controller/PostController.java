@@ -75,4 +75,14 @@ public class PostController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
+    @Operation(summary = "좋아요")
+    @GetMapping("/likes/{idx}")
+    public ResponseEntity<Long> likePost(@PathVariable long idx){
+
+        long result = postService.like(idx);
+
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+
 }

@@ -33,11 +33,23 @@ public class Posts {
     @CreationTimestamp
     private LocalDateTime createdAt;
 
+    @Column(nullable = false)
+    private long like;
+
     @Builder
     Posts(Members members, String file, String content){
         this.members = members;
         this.file = file;
         this.content = content;
+        this.like = 0;
+    }
+
+    public void like(){
+        like += 1;
+    }
+
+    public void dislike(){
+        like -=1;
     }
 
 }

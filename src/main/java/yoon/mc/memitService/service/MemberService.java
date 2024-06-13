@@ -31,7 +31,7 @@ public class MemberService {
     private final String region = "ap-northeast-2";
 
     private MemberResponse toResponse(Members members){
-        return new MemberResponse(members.getNickname(), members.getProfile(), String.valueOf(members.getCreatedAt()));
+        return new MemberResponse(members.getDeviceId(), members.getNickname(), members.getProfile(), String.valueOf(members.getCreatedAt()));
     }
 
     @Transactional
@@ -48,17 +48,24 @@ public class MemberService {
 
     //유저 정보
     @Transactional(readOnly = true)
-    public MemberResponse getInfo(long idx){
-        Members members = memberRepository.findMembersByMemberIdx(idx)
-                .orElseThrow();
-        return toResponse(members);
+    public MemberResponse getInfo(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken)
+            throw new MemitException("로그인 만료", HttpStatus.UNAUTHORIZED);
+
+        Members currentMember = (Members) authentication.getPrincipal();
+
+        return toResponse(currentMember);
     }
 
     //회원가입
     @Transactional
     public MemberResponse register(MemberRegister dto){
+        String uuid = String.valueOf(UUID.randomUUID());
+
         Members members = Members.builder()
-                .deviceId(dto.getDeviceId())
+                .deviceId(uuid)
                 .nickname(dto.getNickname())
                 .profile("https://memit.s3.ap-northeast-2.amazonaws.com/members/default.jpg")
                 .role(Role.USER)
@@ -69,18 +76,13 @@ public class MemberService {
 
     //정보 변경
     @Transactional
-    public MemberResponse updateName(long idx, MemberUpdate dto){
+    public MemberResponse updateName(MemberUpdate dto){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || authentication instanceof AnonymousAuthenticationToken)
             throw new MemitException("로그인 만료", HttpStatus.UNAUTHORIZED);
 
-        Members currentMember = (Members) authentication.getPrincipal();
-
-        Members members = memberRepository.findMembersByMemberIdx(idx).orElseThrow();
-
-        if(members != currentMember)
-            throw new MemitException("멤버가 일치하지 않음", HttpStatus.UNAUTHORIZED);
+        Members members = (Members) authentication.getPrincipal();
 
         members.setNickname(dto.getNickname());
 
@@ -88,18 +90,13 @@ public class MemberService {
     }
 
     @Transactional
-    public MemberResponse updateProfile(long idx, MultipartFile file){
+    public MemberResponse updateProfile(MultipartFile file){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || authentication instanceof AnonymousAuthenticationToken)
             throw new MemitException("로그인 만료", HttpStatus.UNAUTHORIZED);
 
-        Members currentMember = (Members) authentication.getPrincipal();
-
-        Members members = memberRepository.findMembersByMemberIdx(idx).orElseThrow();
-
-        if(members != currentMember)
-            throw new MemitException("멤버가 일치하지 않음", HttpStatus.UNAUTHORIZED);
+        Members members = (Members) authentication.getPrincipal();
 
         String url;
         UUID uuid = UUID.randomUUID();

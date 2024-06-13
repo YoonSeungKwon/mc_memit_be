@@ -2,9 +2,11 @@ package yoon.mc.memitService.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 import yoon.mc.memitService.entity.Members;
 
 @Getter
+@Setter
 @AllArgsConstructor
 public class PostDetailResponse {
 
@@ -19,5 +21,9 @@ public class PostDetailResponse {
     private String content;
 
     private String createAt;
+
+    private long like;
+
+    private boolean liked;
 
 }

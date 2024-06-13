@@ -29,7 +29,7 @@ public class Members {
     @Column(nullable = false, length = 500)
     private String deviceId;
 
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 50, unique = true)
     private String nickname;
 
     @Column(nullable = false, length = 250)

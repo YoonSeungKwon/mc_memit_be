@@ -34,8 +34,8 @@ public class MemberController {
 
 
     @Operation(summary = "이름 중복 확인")
-    @PostMapping("/nickname-check")
-    public ResponseEntity<Boolean> isExist(@RequestBody String nickname){
+    @PostMapping("/nickname-check/{nickname}")
+    public ResponseEntity<Boolean> isExist(@PathVariable String nickname){
 
         boolean result = memberService.existByNickname(nickname);
 
@@ -43,10 +43,10 @@ public class MemberController {
     }
     //유저 정보
     @Operation(summary = "사용자 정보 불러오기 {idx} = 사용자 고유 번호")
-    @GetMapping("/{idx}")
-    public ResponseEntity<MemberResponse> getUserInfo(@PathVariable long idx){
+    @GetMapping("/info")
+    public ResponseEntity<MemberResponse> getUserInfo(){
 
-        MemberResponse response = memberService.getInfo(idx);
+        MemberResponse response = memberService.getInfo();
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -61,19 +61,19 @@ public class MemberController {
     }
     //회원 정보 변경
     @Operation(summary = "이름 바꾸기")
-    @PatchMapping("/{idx}")
-    public ResponseEntity<MemberResponse> updateUserName(@PathVariable long idx, @RequestBody MemberUpdate dto){
+    @PatchMapping("/update")
+    public ResponseEntity<MemberResponse> updateUserName(@RequestBody MemberUpdate dto){
 
-        MemberResponse response = memberService.updateName(idx, dto);
+        MemberResponse response = memberService.updateName(dto);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @Operation(summary = "프로필 사진 바꾸기 (아직 미완)")
-    @PostMapping("/profile/{idx}")
-    public ResponseEntity<MemberResponse> updateUserName(@PathVariable long idx, @RequestBody MultipartFile file){
+    @PostMapping("/profile")
+    public ResponseEntity<MemberResponse> updateUserName(@RequestParam("file") MultipartFile file){
 
-        MemberResponse response = memberService.updateProfile(idx, file);
+        MemberResponse response = memberService.updateProfile(file);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

@@ -39,12 +39,12 @@ public class PostService {
     private final String region = "ap-northeast-2";
 
     private PostResponse toResponse(Posts posts){
-        return new PostResponse(posts.getPostIdx(), posts.getFile());
+        return new PostResponse(posts.getPostIdx(), posts.getFile(), posts.getLike());
     }
 
     private PostDetailResponse toDetailResponse(Posts posts){
         return new PostDetailResponse(posts.getPostIdx(), posts.getMembers().getNickname(),
-                posts.getMembers().getProfile(), posts.getFile(), posts.getContent(), String.valueOf(posts.getCreatedAt()));
+                posts.getMembers().getProfile(), posts.getFile(), posts.getContent(), String.valueOf(posts.getCreatedAt()), posts.getLike(),false);
     }
 
     @Transactional(readOnly = true)
@@ -68,7 +68,7 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public List<PostResponse> getAllPost(){
-        List<Posts> list = postRepository.findAll();
+        List<Posts> list = postRepository.findAllWithLikeDesc();
         List<PostResponse> result = new ArrayList<>();
 
         for(Posts p:list){
@@ -80,8 +80,17 @@ public class PostService {
     //글 디테일 불러오기
     @Transactional(readOnly = true)
     public PostDetailResponse getPostDetail(long idx){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken)
+            throw new MemitException("로그인 만료", HttpStatus.UNAUTHORIZED);
+
+        Members members = (Members) authentication.getPrincipal();
+
         Posts post = postRepository.findPostsByPostIdx(idx).orElseThrow();
-        return toDetailResponse(post);
+        PostDetailResponse response = toDetailResponse(post);
+        response.setLiked(likeRepository.existsByMembersAndPosts(members, post));
+        return response;
     }
 
     //글 쓰기

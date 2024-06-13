@@ -33,7 +33,7 @@ public class Posts {
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name ="`like`")
     private long like;
 
     @Builder

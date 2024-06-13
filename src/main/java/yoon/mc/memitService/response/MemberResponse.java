@@ -7,6 +7,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public class MemberResponse {
 
+    private String id;
+
     private String nickname;
 
     private String profile;

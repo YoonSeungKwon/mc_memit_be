@@ -11,4 +11,6 @@ public class PostResponse {
 
     private String file;
 
+    private long like;
+
 }
